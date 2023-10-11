@@ -1,0 +1,25 @@
+{
+  "name": "egogreen-node",
+  "version": "0.1.0",
+  "description": "node backend for EgoGreen App",
+  "main": "server.js",
+  "scripts": {
+    "test": "nodemon -e js,css,html server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/COMP-523-Sustainability-Tracker/egogreen-node.git"
+  },
+  "author": "@StevenAMartin",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/COMP-523-Sustainability-Tracker/egogreen-node/issues"
+  },
+  "homepage": "https://github.com/COMP-523-Sustainability-Tracker/egogreen-node#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "fs": "^0.0.1-security",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.0.1"
+  }
+}
