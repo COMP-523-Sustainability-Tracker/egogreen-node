@@ -16,16 +16,19 @@ const uploader = new Uploader()
 //Taggun
 const Taggun = require("./lib/Taggun.js")
 
+
 // Uploads endpoint
 app.post('/app/upload', async (req, res, receiptName) => {
+    console.log("Upload Started: " + new Date().toISOString())
     uploader.startUpload(req, res)
     .then((data) => {
-      console.log("Upload of ./uploads/" + data + " complete, calling taggun")
+      console.log("Upload of ./uploads/" + data + " complete, calling taggun: " + new Date().toISOString())
       const taggun = new Taggun()
       const taggunData = taggun.sendReceipt("./uploads/" + data)
-      res.json({
-        full: taggunData})
+      res.sendFile(path.join(__dirname, "./uploads/" + data));
+      
     })
+    console.log("Async Call finished: " + new Date().toISOString())
 
 })
 
