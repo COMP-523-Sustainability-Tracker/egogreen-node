@@ -5,6 +5,10 @@ const fs = require('fs')
 const bodyParser = require("body-parser")
 const app = express()
 const port = 8080
+
+// API KEYS 
+require('dotenv').config()
+
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.set('json spaces', 4)
@@ -13,21 +17,28 @@ app.set('json spaces', 4)
 const Uploader = require("./lib/Uploader.js")
 const uploader = new Uploader()
 
-//Taggun
-const Taggun = require("./lib/Taggun.js")
-
-
 // Uploads endpoint
 app.post('/app/upload', async (req, res, receiptName) => {
     console.log("Upload Started: " + new Date().toISOString())
     uploader.startUpload(req, res)
     .then((data) => {
       console.log("Upload of ./uploads/" + data + " complete, calling taggun: " + new Date().toISOString())
+      // Upload is finished process with Taggun
+      const Taggun = require("./lib/Taggun.js")
       const taggun = new Taggun()
-      const taggunData = taggun.sendReceipt("./uploads/" + data)
-      res.sendFile(path.join(__dirname, "./uploads/" + data));
-      
+      const taggunResult = taggun.sendReceipt("./uploads/" + data)
+      // For testing we send Image to browser 
+      // res.sendFile(path.join(__dirname, "./uploads/" + data))
+      console.log("Taggun API finished: " + new Date().toISOString())
+      return taggunResult
+    }).then((rawTaggunData) => {
+      const Categorizer = require("./lib/Categorizer.js")
+      const categorizer = new Categorizer()
+      const receiptData = categorizer.processReceiptData(rawTaggunData, res)
+
+      res.json(receiptData)
     })
+    .catch(console.log.bind(console))
     console.log("Async Call finished: " + new Date().toISOString())
 
 })

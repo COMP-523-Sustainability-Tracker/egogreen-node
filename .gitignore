@@ -10,3 +10,6 @@ uploads/
 
 .DS_Store
 
+#API Keys
+.env
+
