@@ -1,46 +1,54 @@
 // Express config
-const express = require('express')
-const path = require('node:path')
-const fs = require('fs')
-const bodyParser = require("body-parser")
-const app = express()
-const port = 8080
+import express from 'express'
+import path from 'node:path'
+import bodyParser from 'body-parser'
+import "dotenv/config"
+import { URL } from 'url'
 
-// API KEYS 
-require('dotenv').config()
+function dev (msg) {
+  // set to control verbosity
+  if(true) {
+    console.log(msg)
+  }
+}  
+
+const dirname = new URL('.', import.meta.url).pathname
+const app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.set('json spaces', 4)
 
-// Upload script
-const Uploader = require("./lib/Uploader.js")
-const uploader = new Uploader()
+// Import modules scripts
+import {Uploader} from './lib/Uploader.js'
+import {Taggun} from './lib/Taggun.js'
+import {Categorizer} from './lib/Categorizer.js'
 
 // Uploads endpoint
 app.post('/app/upload', async (req, res, receiptName) => {
-    console.log("Upload Started: " + new Date().toISOString())
-    uploader.startUpload(req, res)
-    .then((data) => {
-      console.log("Upload of ./uploads/" + data + " complete, calling taggun: " + new Date().toISOString())
-      // Upload is finished process with Taggun
-      const Taggun = require("./lib/Taggun.js")
-      const taggun = new Taggun()
-      const taggunResult = taggun.sendReceipt("./uploads/" + data)
-      // For testing we send Image to browser 
-      // res.sendFile(path.join(__dirname, "./uploads/" + data))
-      console.log("Taggun API finished: " + new Date().toISOString())
-      return taggunResult
-    }).then((rawTaggunData) => {
-      const Categorizer = require("./lib/Categorizer.js")
-      const categorizer = new Categorizer()
-      const receiptData = categorizer.processReceiptData(rawTaggunData, res)
+  // Receive Upload
+  const startTime = new Date()
+  dev("Upload Started: " + startTime.toISOString())
+  const uploader = new Uploader()
+  const data = await uploader.startUpload(req, res)
+  let lastSyncTime = new Date()
+  dev("Upload of ./uploads/" + data + " complete, calling taggun - Time Elapsed: " + (lastSyncTime-startTime))
 
-      res.json(receiptData)
-    })
-    .catch(console.log.bind(console))
-    console.log("Async Call finished: " + new Date().toISOString())
+  // Taggun API call
+  const taggun = new Taggun()
+  const taggunResult = await taggun.sendReceipt("./uploads/" + data)
+  let newSyncTime = new Date()
+  dev("Taggun API finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
+  lastSyncTime = newSyncTime
 
+  // Match to 
+  const categorizer = new Categorizer()
+  const receiptData = await categorizer.processReceiptData(taggunResult, res)
+  newSyncTime = new Date()
+  dev("Categorizer finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
+  lastSyncTime = newSyncTime
+  dev("Done: - Total Time Elapsed: " + (newSyncTime-startTime))
+  res.json(receiptData)
 })
 
 // Fail other app endpoints
@@ -49,10 +57,9 @@ app.all('/app/*', (req, res, next) => {
     res.status(404)
 })
 
-
 // Static HTML
-const staticpath = path.join(__dirname, 'public')
+const staticpath = path.join(dirname, 'public')
 app.use('/', express.static(staticpath))
-const server = app.listen(port)
-let startMsg = new Date().toISOString() + ' HTTP server started on port ' + port + '\n'
+const server = app.listen(process.env.PORT)
+let startMsg = new Date().toISOString() + ' HTTP server started on port ' + process.env.PORT + '\n'
 console.log(startMsg)
