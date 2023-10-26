@@ -6,7 +6,7 @@ jspm_packages/
 .npm
 
 #Uploads Dir
-uploads/
+uploads/*
 
 .DS_Store
 
