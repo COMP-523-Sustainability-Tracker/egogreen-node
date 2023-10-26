@@ -26,6 +26,7 @@ import {Categorizer} from './lib/Categorizer.js'
 
 // Uploads endpoint
 app.post('/app/upload', async (req, res, receiptName) => {
+
   // Receive Upload
   const startTime = new Date()
   dev("Upload Started: " + startTime.toISOString())
@@ -41,14 +42,20 @@ app.post('/app/upload', async (req, res, receiptName) => {
   dev("Taggun API finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
   lastSyncTime = newSyncTime
 
+
   // Match to 
-  const categorizer = new Categorizer()
-  const receiptData = await categorizer.processReceiptData(taggunResult, res)
+  const categorizer = new Categorizer(taggunResult)
+  await categorizer.categorizeItems()
   newSyncTime = new Date()
-  dev("Categorizer finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
+  dev("OpenAICategorizer finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
+  lastSyncTime = newSyncTime
+  await categorizer.bendAPI()
+  newSyncTime = new Date()
+  dev("Bend CO2e Calculator finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
   lastSyncTime = newSyncTime
   dev("Done: - Total Time Elapsed: " + (newSyncTime-startTime))
-  res.json(receiptData)
+  await categorizer.setTotal();
+  res.json(categorizer.receiptData)
 })
 
 // Fail other app endpoints
