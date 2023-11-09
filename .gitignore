@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+#Uploads Dir
+uploads/
+
+.DS_Store
+
+#API Keys
+.env
+
+git
