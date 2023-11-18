@@ -45,6 +45,7 @@ app.post('/app/upload', async (req, res, receiptName) => {
 
   // Match to 
   const categorizer = new Categorizer(taggunResult)
+  dev("Categorizing with OpenAI and UNSPSC:")
   await categorizer.categorizeItems()
   newSyncTime = new Date()
   dev("OpenAICategorizer finished - Time Elapsed: " + (newSyncTime-lastSyncTime))
