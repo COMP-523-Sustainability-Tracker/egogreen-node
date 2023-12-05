@@ -84,8 +84,8 @@ app.all('/app/*', (req, res, next) => {
 })
 
 // Static HTML
-//const staticpath = path.join(dirname, 'public')
-//app.use('/', express.static(staticpath))
+const staticpath = path.join(dirname, 'public')
+app.use('/', express.static(staticpath))
 const server = app.listen(process.env.PORT)
 let startMsg = new Date().toISOString() + ' HTTP server started on port ' + process.env.PORT + '\n'
 console.log(startMsg)
