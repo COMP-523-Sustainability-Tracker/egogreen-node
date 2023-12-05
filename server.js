@@ -38,7 +38,7 @@ app.post('/app/upload', async (req, res, receiptName) => {
   const UID = req.get('authorization')
 
   // Only process if the POST request includes a UID token
-  if (typeof UID !== 'undefined' && query) {
+  if (typeof UID !== 'undefined' && UID) {
 
     // Receive Upload
     const startTime = new Date()
