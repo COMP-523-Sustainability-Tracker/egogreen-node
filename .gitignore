@@ -12,5 +12,6 @@ uploads/
 
 #API Keys
 .env
-
+.firebaseKey.json
+firebase.js
 git

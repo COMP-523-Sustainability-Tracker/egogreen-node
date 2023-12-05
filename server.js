@@ -5,6 +5,26 @@ import bodyParser from 'body-parser'
 import "dotenv/config"
 import { URL } from 'url'
 
+import admin from 'firebase-admin'
+const serviceAccount = process.env.FIRESTORE_KEY
+
+admin.initializeApp({
+  credential: admin.credential.cert(JSON.parse(serviceAccount))
+})
+
+const db = admin.firestore();
+
+
+//import { initializeApp } from "firebase/app";
+//import { getFirestore,  collection, query, where, getDocs, orderBy, limit } from "firebase/firestore"
+
+//Firebase to store Results
+//const firebaseConfig = JSON.parse(process.env.FIREBASEAPP)
+//const fbapp = initializeApp(firebaseConfig);
+//const fbDB = getFirestore(fbapp);
+
+const UID = 'pnRg0U6lpmRoVME9V8aGfo43uqd2'
+
 function dev (msg) {
   // set to control verbosity
   if(true) {
@@ -27,6 +47,9 @@ import {Categorizer} from './lib/Categorizer.js'
 // Uploads endpoint
 app.post('/app/upload', async (req, res, receiptName) => {
 
+  const UID = req.get('authorization')
+  console.log(UID)
+
   // Receive Upload
   const startTime = new Date()
   dev("Upload Started: " + startTime.toISOString())
@@ -34,7 +57,8 @@ app.post('/app/upload', async (req, res, receiptName) => {
   const data = await uploader.startUpload(req, res)
   let lastSyncTime = new Date()
   dev("Upload of ./uploads/" + data + " complete, calling taggun - Time Elapsed: " + (lastSyncTime-startTime))
-
+	res.json({"message":"200 Success"})
+    res.status(200)
   // Taggun API call
   const taggun = new Taggun()
   const taggunResult = await taggun.sendReceipt("./uploads/" + data)
@@ -55,7 +79,8 @@ app.post('/app/upload', async (req, res, receiptName) => {
   lastSyncTime = newSyncTime
   dev("Done: - Total Time Elapsed: " + (newSyncTime-startTime))
   await categorizer.setTotal();
-  res.json(categorizer.receiptData)
+  console.log("userData/" + UID +"/receipts")
+  await db.collection("userData/" + UID +"/receipts").add(categorizer.receiptData)
 })
 
 // Fail other app endpoints
