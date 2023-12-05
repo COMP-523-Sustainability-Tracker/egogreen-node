@@ -69,7 +69,7 @@ app.post('/app/upload', async (req, res, receiptName) => {
     lastSyncTime = newSyncTime
     dev("Done: - Total Time Elapsed: " + (newSyncTime-startTime))
     await categorizer.setTotal();
-    console.log("userData/" + UID +"/receipts")
+    //console.log("userData/" + UID +"/receipts")
     await db.collection("userData/" + UID +"/receipts").add(categorizer.receiptData)
   } else {
     res.json({"message":"400 Bad Request"})
