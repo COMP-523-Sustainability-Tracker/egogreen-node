@@ -4,12 +4,15 @@ import path from 'node:path'
 import bodyParser from 'body-parser'
 import "dotenv/config"
 import { URL } from 'url'
-
+import uuid from 'uuid-v4'
 import admin from 'firebase-admin'
 const serviceAccount = process.env.FIRESTORE_KEY
 
+
+
 admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(serviceAccount))
+  credential: admin.credential.cert(JSON.parse(serviceAccount)),
+  storageBucket: "egogreen-e5ca9.appspot.com"
 })
 
 const db = admin.firestore();
@@ -33,10 +36,9 @@ import {Taggun} from './lib/Taggun.js'
 import {Categorizer} from './lib/Categorizer.js'
 
 // Uploads endpoint
-app.post('/app/upload', async (req, res, receiptName) => {
+app.post('/app/upload', async (req, res) => {
 
   const UID = req.get('authorization')
-
   // Only process if the POST request includes a UID token
   if (typeof UID !== 'undefined' && UID) {
 
@@ -47,8 +49,40 @@ app.post('/app/upload', async (req, res, receiptName) => {
     const data = await uploader.startUpload(req, res)
     let lastSyncTime = new Date()
     dev("Upload of ./uploads/" + data + " complete, calling taggun - Time Elapsed: " + (lastSyncTime-startTime))
+    // Notify client we are complete
     res.json({"message":"200 Success"})
-      res.status(200)
+    res.status(200)
+    
+    //Save image to firebase Storage
+    var bucket = admin.storage().bucket();
+    console.log("./uploads/" + data)
+
+    const metadata = {
+      metadata: {
+        firebaseStorageDownloadTokens: uuid()
+      },
+      contentType: 'image/png',
+      cacheControl: 'public, max-age=31536000',
+    };
+  
+    await bucket.upload("./uploads/" + data, {
+      destination: UID + data,
+      gzip: true,
+      metadata: metadata,
+    })
+    const initialReceiptData = {
+      date: startTime.toISOString(),
+      merchantName: "New Receipt - Processing",
+      imageURL: UID + data,
+      receiptTotal: 0.00,
+      totalGCO2e: 0.00
+    }
+
+    const docID = await db.collection("userData/" + UID +"/receipts").add(initialReceiptData)
+    .then(docref => {
+      return (docref.id)
+    })   
+    console.log("DB id: " + docID) 
     // Taggun API call
     const taggun = new Taggun()
     const taggunResult = await taggun.sendReceipt("./uploads/" + data)
@@ -70,7 +104,7 @@ app.post('/app/upload', async (req, res, receiptName) => {
     dev("Done: - Total Time Elapsed: " + (newSyncTime-startTime))
     await categorizer.setTotal();
     //console.log("userData/" + UID +"/receipts")
-    await db.collection("userData/" + UID +"/receipts").add(categorizer.receiptData)
+    await db.collection("userData/" + UID +"/receipts").doc(docID).update(categorizer.receiptData)
   } else {
     res.json({"message":"400 Bad Request"})
     res.status(400)
