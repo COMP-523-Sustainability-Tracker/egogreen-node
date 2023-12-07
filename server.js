@@ -73,7 +73,7 @@ app.post('/app/upload', async (req, res) => {
     const initialReceiptData = {
       date: startTime.toISOString(),
       merchantName: "New Receipt - Processing",
-      imageURL: destinationFile,
+      imageURL: encodeURIComponent(destinationFile),
       receiptTotal: 0.00,
       totalGCO2e: 0.00
     }
