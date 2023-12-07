@@ -64,16 +64,16 @@ app.post('/app/upload', async (req, res) => {
       contentType: 'image/png',
       cacheControl: 'public, max-age=31536000',
     };
-  
+    const destinationFile = UID + "/" + data
     await bucket.upload("./uploads/" + data, {
-      destination: UID + data,
+      destination: destinationFile,
       gzip: true,
       metadata: metadata,
     })
     const initialReceiptData = {
       date: startTime.toISOString(),
       merchantName: "New Receipt - Processing",
-      imageURL: UID + data,
+      imageURL: destinationFile,
       receiptTotal: 0.00,
       totalGCO2e: 0.00
     }
